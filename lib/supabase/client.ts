@@ -1,5 +1,5 @@
 /**
- * 半球 halfsphere - Supabase 客户端（浏览器端）
+ * 穹弯 halfsphere - Supabase 客户端（浏览器端）
  */
 import { createBrowserClient } from "@supabase/ssr";
 import type { Database } from "./types";

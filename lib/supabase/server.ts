@@ -1,5 +1,5 @@
 /**
- * 半球 halfsphere - Supabase 客户端（服务端）
+ * 穹弯 halfsphere - Supabase 客户端（服务端）
  */
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";

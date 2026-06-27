@@ -1,5 +1,5 @@
 /**
- * 半球 halfsphere - New-API Usage Fetcher
+ * 穹弯 halfsphere - New-API Usage Fetcher
  * 兼容 one-api / new-api 的多 provider 聚合网关
  * 通过 GET /api/log?type=2 拉取请求日志，按 date+model 聚合
  */

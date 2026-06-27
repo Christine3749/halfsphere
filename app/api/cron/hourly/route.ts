@@ -1,5 +1,5 @@
 /**
- * 半球 halfsphere - Vercel Cron 每小时同步任务
+ * 穹弯 halfsphere - Vercel Cron 每小时同步任务
  * GET /api/cron/hourly
  * 遍历所有用户的所有 providers，拉取 usage 数据并写入数据库
  * 必须通过 Authorization: Bearer ${CRON_SECRET} header 鉴权

@@ -1,4 +1,4 @@
--- 半球 halfsphere — 权限系统升级
+-- 穹弯 halfsphere — 权限系统升级
 -- 角色：guest(游客) → user(普通用户) → admin(管理员)
 
 /* ── 1. 扩展 user_tiers ── */

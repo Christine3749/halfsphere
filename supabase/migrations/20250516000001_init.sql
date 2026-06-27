@@ -1,4 +1,4 @@
--- 半球 halfsphere MVP 数据库初始化
+-- 穹弯 halfsphere MVP 数据库初始化
 -- 创建时间: 2026-05-16
 
 -- 启用 UUID 扩展

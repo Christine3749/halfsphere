@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * 半球 halfsphere - 基地节点监控脚本
+ * 穹弯 halfsphere - 基地节点监控脚本
  * 
  * 用法:
  * 1. 在 halfsphere Settings → 基地 中添加节点，获取 node_id

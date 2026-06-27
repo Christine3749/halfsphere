@@ -1,5 +1,5 @@
 /**
- * 半球 halfsphere - OpenAI Usage Fetcher
+ * 穹弯 halfsphere - OpenAI Usage Fetcher
  * 调用 OpenAI Organization Usage API 获取消耗数据
  * 文档: https://platform.openai.com/docs/api-reference/usage
  */

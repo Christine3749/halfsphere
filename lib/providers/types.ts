@@ -1,5 +1,5 @@
 /**
- * 半球 halfsphere - Provider Fetcher 通用类型
+ * 穹弯 halfsphere - Provider Fetcher 通用类型
  */
 
 export interface UsageSnapshot {

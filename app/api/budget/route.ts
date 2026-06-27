@@ -1,5 +1,5 @@
 /**
- * 半球 halfsphere - 预算配置 API
+ * 穹弯 halfsphere - 预算配置 API
  * GET /api/budget    -> 获取当前用户的预算配置
  * POST /api/budget   -> 创建或更新预算配置
  */

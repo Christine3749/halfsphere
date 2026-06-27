@@ -1,5 +1,5 @@
 /**
- * 半球 halfsphere - Usage 查询 API
+ * 穹弯 halfsphere - Usage 查询 API
  * GET /api/usage?range=30d&group_by=provider
  * 支持参数:
  *   - range: 7d / 30d / 90d / month (默认 30d)

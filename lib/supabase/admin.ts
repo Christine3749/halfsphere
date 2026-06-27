@@ -1,5 +1,5 @@
 /**
- * 半球 halfsphere - Supabase Admin 客户端（Service Role Key）
+ * 穹弯 halfsphere - Supabase Admin 客户端（Service Role Key）
  * 用于 Cron Job 等需要绕过 RLS 的场景
  */
 import { createClient } from "@supabase/supabase-js";

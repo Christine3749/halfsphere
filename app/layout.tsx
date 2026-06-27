@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "半球 · halfsphere",
+  title: "穹弯",
   description: "森哥的个人 AI 与基础设施统一作战面板",
   icons: {
     icon: "/favicon.svg",

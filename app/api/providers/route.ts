@@ -1,5 +1,5 @@
 /**
- * 半球 halfsphere - Provider API 路由
+ * 穹弯 halfsphere - Provider API 路由
  * POST: 添加新 provider
  * GET:  列出当前用户的所有 providers（不含 API Key）
  * DELETE: 删除指定 provider
