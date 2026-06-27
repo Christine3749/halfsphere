@@ -1,5 +1,5 @@
 /**
- * 半球 halfsphere - Anthropic Usage Fetcher
+ * 穹弯 halfsphere - Anthropic Usage Fetcher
  * 调用 Anthropic Organization Usage Report API 获取消耗数据
  * 注意：需要 Admin API Key（组织管理员才能获取）
  * 文档: https://docs.anthropic.com/en/api/admin-api/usage-reports

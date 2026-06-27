@@ -10,7 +10,7 @@ function getResend() {
   return resend;
 }
 
-const FROM = "Halfsphere <noreply@halfsphere.com>";
+const FROM = "穹弯 <noreply@halfsphere.com>";
 const LOGIN_URL = "https://halfsphere.com/login";
 
 const base = (content: string) => `
@@ -19,15 +19,15 @@ const base = (content: string) => `
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Halfsphere</title>
+  <title>穹弯</title>
 </head>
 <body style="margin:0;padding:0;background:#0A0A0B;font-family:'Courier New',Courier,monospace;-webkit-font-smoothing:antialiased">
   <div style="max-width:540px;margin:48px auto;padding:0 16px 48px">
 
     <!-- Logo -->
     <div style="text-align:center;margin-bottom:40px">
-      <img src="https://halfsphere.com/favicon.svg" width="40" height="40" alt="Halfsphere" style="display:inline-block;vertical-align:middle;margin-right:10px">
-      <span style="font-size:18px;font-weight:600;color:#E5E5E7;vertical-align:middle;letter-spacing:0.05em">halfsphere</span>
+      <img src="https://halfsphere.com/favicon.svg" width="40" height="40" alt="穹弯" style="display:inline-block;vertical-align:middle;margin-right:10px">
+      <span style="font-size:18px;font-weight:600;color:#E5E5E7;vertical-align:middle;letter-spacing:0.05em">穹弯</span>
     </div>
 
     <!-- Card -->
@@ -38,7 +38,7 @@ const base = (content: string) => `
     <!-- Footer -->
     <div style="margin-top:24px;text-align:center">
       <p style="margin:0;font-size:11px;color:#4A4A4F;letter-spacing:0.12em;text-transform:uppercase">
-        Halfsphere · Personal Command Center
+        穹弯 · Internal Command Center
       </p>
       <p style="margin:8px 0 0;font-size:11px;color:#4A4A4F">
         个人作战面板 · <a href="https://halfsphere.com" style="color:#FFB020;text-decoration:none">halfsphere.com</a>
@@ -118,7 +118,7 @@ export async function sendApprovalEmail(
   await getResend().emails.send({
     from: FROM,
     to: email,
-    subject: "你的 Halfsphere 申请已通过 · Access Granted",
+    subject: "你的穹弯申请已通过 · Access Granted",
     html: base(content),
   });
 }
@@ -143,10 +143,10 @@ export async function sendRejectionEmail(email: string, displayName: string) {
     <!-- Body -->
     <div style="background:#0A0A0B;border:1px solid #26262A;border-radius:6px;padding:24px;margin-bottom:28px">
       <p style="margin:0 0 12px;font-size:13px;color:#6E6E76;line-height:1.8">
-        感谢你申请加入 Halfsphere，本次暂未通过审核。
+        感谢你申请加入穹弯，本次暂未通过审核。
       </p>
       <p style="margin:0;font-size:13px;color:#6E6E76;line-height:1.8">
-        Thank you for applying to Halfsphere. Unfortunately, your application was not approved at this time.
+        Thank you for applying to Qiongwan. Unfortunately, your application was not approved at this time.
       </p>
     </div>
 
@@ -158,7 +158,7 @@ export async function sendRejectionEmail(email: string, displayName: string) {
   await getResend().emails.send({
     from: FROM,
     to: email,
-    subject: "关于你的 Halfsphere 申请 · Application Update",
+    subject: "关于你的穹弯申请 · Application Update",
     html: base(content),
   });
 }

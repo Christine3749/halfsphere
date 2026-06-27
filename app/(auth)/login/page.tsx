@@ -61,7 +61,7 @@ export default function LoginPage() {
                 textTransform: "lowercase",
               }}
             >
-              halfsphere
+              穹弯
             </h1>
             <p
               className="mono"
@@ -73,7 +73,7 @@ export default function LoginPage() {
                 textTransform: "uppercase",
               }}
             >
-              半球 · 个人作战面板
+              穹弯 · 内部作战面板
             </p>
           </div>
         </div>
@@ -198,7 +198,7 @@ export default function LoginPage() {
             letterSpacing: "0.14em",
           }}
         >
-          HALFSPHERE · BURN CTRL / 01 · v0.1.0-mvp
+          穹弯 · BURN CTRL / 01 · v0.1.0-mvp
         </p>
       </div>
     </div>

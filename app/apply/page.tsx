@@ -64,10 +64,10 @@ export default function ApplyPage() {
         <div className="flex flex-col items-center">
           <HemisphereMark size={40} />
           <h1 className="mt-4 text-2xl font-semibold tracking-tight text-[#E5E5E7]">
-            halfsphere
+            穹弯
           </h1>
           <p className="mt-1 text-xs tracking-widest text-[#8E8E93]">
-            申请访问 / 个人作战面板
+            申请访问 / 内部作战面板
           </p>
         </div>
 

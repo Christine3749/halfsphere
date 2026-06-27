@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { HemisphereMark } from "@/components/hemisphere-mark";
-import { Flame, Bot, Server, Settings, Wallet, Shield } from "lucide-react";
+import { Flame, Bot, Server, Settings, Wallet, Shield, KeyRound } from "lucide-react";
 const navModules = [
   { label: "燃烧", code: "BURNING / 01", href: "/", icon: Flame, perm: null },       // 所有人可见
   { label: "舰队", code: "FLEET / 02", href: "/fleet", icon: Bot, perm: "fleet" },     // 需 fleet 权限
@@ -19,6 +19,7 @@ const navControls = [
 
 const navAdmin = [
   { label: "审核", code: "ADMIN", href: "/admin/applications", icon: Shield },
+  { label: "会员", code: "MEMBERS", href: "/admin/memberships", icon: KeyRound },
 ];
 
 function DividerV() {
@@ -234,7 +235,7 @@ export function Sidebar() {
                 lineHeight: 1,
               }}
             >
-              halfsphere
+              穹弯
             </span>
             <div
               style={{
@@ -254,7 +255,7 @@ export function Sidebar() {
                   fontWeight: 500,
                 }}
               >
-                半球
+                穹弯
               </span>
               <span
                 style={{ width: 1, height: 8, background: "var(--border-strong)" }}

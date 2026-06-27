@@ -1,5 +1,5 @@
 /**
- * 半球 halfsphere - AES-256-GCM 加密模块
+ * 穹弯 halfsphere - AES-256-GCM 加密模块
  * 用于加密存储用户的 Provider API Key
  */
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "crypto";

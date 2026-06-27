@@ -230,7 +230,7 @@ export default function DashboardPage() {
             className="mono"
             style={{ fontSize: 10, color: "var(--fg-faint)", letterSpacing: "0.18em" }}
           >
-            HALFSPHERE · BURNING / 01 · halfsphere.com
+            穹弯 · BURNING / 01 · INTERNAL OPS
           </span>
           <span
             className="mono"

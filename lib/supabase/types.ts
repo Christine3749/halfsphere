@@ -1,5 +1,5 @@
 /**
- * 半球 halfsphere - Supabase 数据库类型定义
+ * 穹弯 halfsphere - Supabase 数据库类型定义
  * 基于 migrations/20250516000001_init.sql 生成
  */
 

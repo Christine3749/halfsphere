@@ -1,5 +1,5 @@
 /**
- * 半球 halfsphere - 手动触发 Usage 同步
+ * 穹弯 halfsphere - 手动触发 Usage 同步
  * POST /api/usage/sync
  * 遍历当前用户的所有 providers，调用对应 fetcher 拉取数据并写入数据库
  */

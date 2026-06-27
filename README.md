@@ -1,4 +1,4 @@
-# 半球 · halfsphere
+# 穹弯 · halfsphere
 
 森哥的个人 AI 与基础设施统一作战面板。
 
