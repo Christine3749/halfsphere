@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@/lib/supabase/types";
+
+type NetworkSnapshot = Pick<
+  Database["public"]["Tables"]["network_snapshots"]["Row"],
+  "node_id" | "latency_ms" | "status" | "checked_at"
+>;
 
 export async function GET() {
   try {
@@ -22,7 +28,7 @@ export async function GET() {
 
     // 获取每个节点的最新快照
     const nodeIds = nodes?.map((n) => n.id) ?? [];
-    let snapshots: any[] = [];
+    let snapshots: NetworkSnapshot[] = [];
 
     if (nodeIds.length > 0) {
       const { data: snapData } = await supabase
@@ -32,7 +38,7 @@ export async function GET() {
         .order("checked_at", { ascending: false });
 
       // 取每个节点的最新一条
-      const seen = new Set();
+      const seen = new Set<string>();
       snapshots = (snapData ?? []).filter((s) => {
         if (seen.has(s.node_id)) return false;
         seen.add(s.node_id);

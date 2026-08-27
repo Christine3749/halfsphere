@@ -3,6 +3,38 @@
 -- ⚠️ 会删除所有数据，谨慎使用
 -- ============================================
 
+-- QUARANTINED: 默认执行必定失败。仅在已取得用户对本次数据破坏的明确批准、
+-- 已验证离线备份 SHA-256、并确认目标数据库名称后，才可在同一会话中设置：
+--   SET halfsphere.destructive_rebuild_approval = 'NUCLEAR_REBUILD_ACKNOWLEDGED';
+--   SET halfsphere.expected_database = '<current_database() 的精确值>';
+--   SET halfsphere.verified_backup_sha256 = '<64 位小写 SHA-256>';
+--   SET halfsphere.change_id = 'HS-YYYYMMDD-<审批记录>';
+-- 此门禁只防止误执行，不替代备份恢复演练、变更审批或数据校验。
+BEGIN;
+
+DO $halfsphere_destructive_guard$
+DECLARE
+    expected_database TEXT := current_setting('halfsphere.expected_database', true);
+    approval TEXT := current_setting('halfsphere.destructive_rebuild_approval', true);
+    backup_sha256 TEXT := current_setting('halfsphere.verified_backup_sha256', true);
+    change_id TEXT := current_setting('halfsphere.change_id', true);
+BEGIN
+    IF approval IS DISTINCT FROM 'NUCLEAR_REBUILD_ACKNOWLEDGED' THEN
+        RAISE EXCEPTION 'nuclear-rebuild.sql is quarantined: explicit approval is absent';
+    END IF;
+    IF expected_database IS NULL OR expected_database <> current_database() THEN
+        RAISE EXCEPTION 'nuclear-rebuild.sql target mismatch: expected %, connected %',
+            expected_database, current_database();
+    END IF;
+    IF backup_sha256 IS NULL OR backup_sha256 !~ '^[0-9a-f]{64}$' THEN
+        RAISE EXCEPTION 'nuclear-rebuild.sql requires a verified lowercase SHA-256 backup hash';
+    END IF;
+    IF change_id IS NULL OR change_id !~ '^HS-[0-9]{8}-[A-Za-z0-9._-]+$' THEN
+        RAISE EXCEPTION 'nuclear-rebuild.sql requires an approved HS change id';
+    END IF;
+END
+$halfsphere_destructive_guard$;
+
 -- 1. 删除 auth.users 上的触发器（防止删 schema 时外键/触发器报错）
 DROP TRIGGER IF EXISTS on_auth_user_created_tier ON auth.users;
 
@@ -117,8 +149,9 @@ CREATE UNIQUE INDEX idx_registration_requests_email ON public.registration_reque
 
 ALTER TABLE public.registration_requests ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "anon_insert_requests" ON public.registration_requests FOR INSERT TO anon, authenticated WITH CHECK (true);
-CREATE POLICY "select_requests" ON public.registration_requests FOR SELECT TO anon, authenticated USING (true);
-GRANT ALL ON public.registration_requests TO authenticated;
+CREATE POLICY "registration_requests_self_select" ON public.registration_requests FOR SELECT TO authenticated
+  USING (lower(email) = lower(COALESCE(auth.jwt() ->> 'email', '')));
+GRANT INSERT, SELECT ON public.registration_requests TO authenticated;
 
 CREATE TRIGGER update_registration_requests_updated_at
     BEFORE UPDATE ON public.registration_requests
@@ -140,8 +173,7 @@ CREATE TABLE public.user_tiers (
 
 ALTER TABLE public.user_tiers ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "user_tiers_self_select" ON public.user_tiers FOR SELECT TO authenticated USING (auth.uid() = user_id);
-CREATE POLICY "user_tiers_self_update" ON public.user_tiers FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-GRANT SELECT, UPDATE ON public.user_tiers TO authenticated;
+GRANT SELECT ON public.user_tiers TO authenticated;
 
 CREATE TRIGGER update_user_tiers_updated_at
     BEFORE UPDATE ON public.user_tiers
@@ -230,12 +262,11 @@ CREATE POLICY "network_snapshots_self" ON public.network_snapshots FOR ALL USING
 GRANT ALL ON public.network_snapshots TO authenticated;
 
 -- ============================================
--- 补充 admin 记录
+-- 管理员/owner 由受审计的引导流程授予，不在重建脚本中硬编码。
 -- ============================================
-INSERT INTO public.user_tiers (user_id, tier, permissions)
-VALUES ('29964ebd-c191-4ddf-ad28-bed931cab458', 'admin', '[]')
-ON CONFLICT (user_id) DO UPDATE SET tier = 'admin';
 
 -- ============================================
 -- 清理完成
 -- ============================================
+
+COMMIT;

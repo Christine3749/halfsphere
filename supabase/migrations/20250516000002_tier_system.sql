@@ -25,12 +25,14 @@ CREATE POLICY "允许匿名提交申请"
     TO anon, authenticated
     WITH CHECK (true);
 
--- 只有本人可以查看自己的申请（通过 email 匹配）
+-- 登录用户只能按 JWT 邮箱查看自己的申请；匿名用户不可读取申请人 PII。
 CREATE POLICY "用户可以查看自己的申请"
     ON public.registration_requests
     FOR SELECT
-    TO anon, authenticated
-    USING (true);
+    TO authenticated
+    USING (
+      lower(email) = lower(COALESCE(auth.jwt() ->> 'email', ''))
+    );
 
 -- ============================================
 -- user_tiers: 用户等级表
@@ -53,12 +55,8 @@ CREATE POLICY "用户只能查看自己的等级"
     TO authenticated
     USING (auth.uid() = user_id);
 
-CREATE POLICY "用户只能更新自己的等级"
-    ON public.user_tiers
-    FOR UPDATE
-    TO authenticated
-    USING (auth.uid() = user_id)
-    WITH CHECK (auth.uid() = user_id);
+-- Role and permission changes are privileged server-side operations. Granting
+-- self UPDATE here would let a user promote their own tier to admin/owner.
 
 -- ============================================
 -- 触发器：新用户注册时自动创建 user 等级记录
@@ -94,6 +92,6 @@ CREATE TRIGGER update_user_tiers_updated_at
 -- ============================================
 -- 权限
 -- ============================================
-GRANT ALL ON public.registration_requests TO authenticated;
-GRANT SELECT, UPDATE ON public.user_tiers TO authenticated;
+GRANT INSERT, SELECT ON public.registration_requests TO authenticated;
+GRANT SELECT ON public.user_tiers TO authenticated;
 GRANT USAGE ON SCHEMA public TO authenticated;

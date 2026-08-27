@@ -8,9 +8,19 @@ RUN corepack enable pnpm && pnpm install --frozen-lockfile
 
 FROM base AS builder
 WORKDIR /app
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN corepack enable pnpm && pnpm build
+RUN test -n "$NEXT_PUBLIC_SUPABASE_URL" \
+    && test -n "$NEXT_PUBLIC_SUPABASE_ANON_KEY" \
+    && test -n "$NEXT_PUBLIC_API_URL" \
+    && corepack enable pnpm \
+    && pnpm build
 
 FROM base AS runner
 WORKDIR /app

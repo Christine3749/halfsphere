@@ -94,7 +94,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: "服务器错误" }, { status: 500 });
   }
 }

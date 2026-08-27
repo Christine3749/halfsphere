@@ -1,8 +1,26 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { randomBytes } from "crypto";
 import { sendApprovalEmail } from "@/lib/email";
+
+const USERS_PER_PAGE = 1_000;
+
+async function userExists(email: string) {
+  const admin = createAdminClient();
+  const normalizedEmail = email.toLowerCase();
+
+  for (let page = 1; ; page += 1) {
+    const { data, error } = await admin.auth.admin.listUsers({
+      page,
+      perPage: USERS_PER_PAGE,
+    });
+    if (error) throw error;
+    if (data.users.some((user) => user.email?.toLowerCase() === normalizedEmail)) {
+      return true;
+    }
+    if (data.users.length < USERS_PER_PAGE) return false;
+  }
+}
 
 export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { error: authError } = await requireAdmin();
@@ -24,55 +42,63 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     return NextResponse.json({ error: "申请不存在或已处理" }, { status: 404 });
   }
 
-  // 2. 检查用户是否已存在
-  const { data: existingUsers } = await admin.auth.admin.listUsers();
-  const alreadyExists = existingUsers?.users.some(
-    (u) => u.email?.toLowerCase() === req.email.toLowerCase()
-  );
-
-  let tempPassword: string | null = null;
-
-  if (!alreadyExists) {
-    // 3a. 用户不存在，正常创建
-    tempPassword = randomBytes(12).toString("hex");
-    const { error: createError } = await admin.auth.admin.createUser({
-      email: req.email,
-      password: tempPassword,
-      email_confirm: true,
-      user_metadata: { display_name: req.display_name },
-    });
-
-    if (createError) {
-      console.error("创建用户失败:", createError);
-      return NextResponse.json({ error: createError.message }, { status: 500 });
-    }
+  let alreadyExists: boolean;
+  try {
+    alreadyExists = await userExists(req.email);
+  } catch (lookupError) {
+    console.error("查询用户失败:", lookupError);
+    return NextResponse.json({ error: "无法确认用户状态" }, { status: 502 });
   }
-  // 3b. 用户已存在，跳过创建，直接标记通过
 
-  // 4. 更新申请状态
+  const appBaseUrl = process.env.APP_BASE_URL;
+  if (!appBaseUrl) {
+    return NextResponse.json({ error: "APP_BASE_URL 未配置" }, { status: 500 });
+  }
+
+  let redirectTo: string;
+  try {
+    redirectTo = new URL("/set-password", appBaseUrl).toString();
+  } catch {
+    return NextResponse.json({ error: "APP_BASE_URL 配置无效" }, { status: 500 });
+  }
+
+  const { data: linkData, error: linkError } = alreadyExists
+    ? await admin.auth.admin.generateLink({
+        type: "recovery",
+        email: req.email,
+        options: { redirectTo },
+      })
+    : await admin.auth.admin.generateLink({
+        type: "invite",
+        email: req.email,
+        options: { redirectTo, data: { display_name: req.display_name } },
+      });
+  const actionLink = linkData.properties?.action_link;
+  if (linkError || !actionLink) {
+    console.error("生成一次性链接失败:", linkError);
+    return NextResponse.json({ error: "无法生成一次性设置密码链接" }, { status: 502 });
+  }
+
+  try {
+    await sendApprovalEmail(req.email, req.display_name, actionLink);
+  } catch (emailError) {
+    console.error("发送审核通过邮件失败:", emailError);
+    return NextResponse.json({ error: "审核邮件发送失败，请重试" }, { status: 502 });
+  }
+
   const { error: updateError } = await admin
     .from("registration_requests")
-    .update({ status: "approved", updated_at: new Date().toISOString() } as any)
+    .update({ status: "approved", updated_at: new Date().toISOString() })
     .eq("id", id);
-
   if (updateError) {
     console.error("更新申请状态失败:", updateError);
-  }
-
-  // 发送通过邮件（已存在用户不发密码）
-  if (!alreadyExists && tempPassword) {
-    try {
-      await sendApprovalEmail(req.email, req.display_name, tempPassword);
-    } catch (emailErr) {
-      console.error("发送审核通过邮件失败:", emailErr);
-    }
+    return NextResponse.json({ error: "申请状态更新失败" }, { status: 500 });
   }
 
   return NextResponse.json({
     success: true,
     email: req.email,
     already_existed: alreadyExists,
-    temp_password: tempPassword,
-    message: alreadyExists ? "用户已存在，申请已标记为通过" : `用户已创建，初始密码: ${tempPassword}`,
+    message: "审核已通过，一次性设置密码链接已发送",
   });
 }

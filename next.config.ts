@@ -1,21 +1,37 @@
 import type { NextConfig } from "next";
+import { fileURLToPath } from "node:url";
+
+function configuredOrigin(name: string) {
+  const value = process.env[name];
+  if (!value) throw new Error(`${name} is required`);
+  const url = new URL(value);
+  if (url.protocol !== "https:" && url.hostname !== "127.0.0.1" && url.hostname !== "localhost") {
+    throw new Error(`${name} must use HTTPS outside local development`);
+  }
+  return url.origin;
+}
+
+const projectRoot = fileURLToPath(new URL(".", import.meta.url));
 
 const nextConfig: NextConfig = {
-  // output: "standalone", // 用于 Docker，Vercel 部署时不需要
+  output: "standalone",
+  turbopack: {
+    root: projectRoot,
+  },
 
   async headers() {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-    const supabaseHost = supabaseUrl ? new URL(supabaseUrl).host : "";
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL ?? "";
+    const supabaseOrigin = configuredOrigin("NEXT_PUBLIC_SUPABASE_URL");
+    const backendOrigin = configuredOrigin("NEXT_PUBLIC_API_URL");
 
-    const connectSrcParts = ["'self'", supabaseUrl, "https://*.supabase.co", "https://*.run.app"];
-    if (backendUrl) connectSrcParts.push(backendUrl);
-    const connectSrc = `connect-src ${connectSrcParts.filter(Boolean).join(" ")}`;
+    const connectSrc = `connect-src 'self' ${supabaseOrigin} ${backendOrigin}`;
+    const scriptSrc = process.env.NODE_ENV === "development"
+      ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+      : "script-src 'self' 'unsafe-inline'";
 
     const csp = [
       "default-src 'self'",
       connectSrc,
-      `script-src 'self' 'unsafe-inline' 'unsafe-eval'`,
+      scriptSrc,
       `style-src 'self' 'unsafe-inline'`,
       `img-src 'self' data: blob:`,
       `font-src 'self'`,

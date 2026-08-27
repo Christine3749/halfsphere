@@ -3,7 +3,7 @@ import { requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function GET() {
-  const { error, user } = await requireAdmin();
+  const { error } = await requireAdmin();
   if (error) return error;
 
   try {
@@ -21,21 +21,21 @@ export async function GET() {
     const apps = data ?? [];
 
     // 自动 approve：pending 但邮箱已在 auth.users 的申请
-    const pending = apps.filter((a: any) => a.status === "pending");
+    const pending = apps.filter((application) => application.status === "pending");
     if (pending.length > 0) {
       const { data: existingUsers } = await admin.auth.admin.listUsers();
       const registeredEmails = new Set(
         existingUsers?.users.map((u) => u.email?.toLowerCase())
       );
 
-      const toAutoApprove = pending.filter((a: any) =>
-        registeredEmails.has(a.email?.toLowerCase())
+      const toAutoApprove = pending.filter((application) =>
+        registeredEmails.has(application.email.toLowerCase())
       );
 
       for (const app of toAutoApprove) {
         await admin
           .from("registration_requests")
-          .update({ status: "approved", updated_at: new Date().toISOString() } as any)
+          .update({ status: "approved", updated_at: new Date().toISOString() })
           .eq("id", app.id);
         app.status = "approved"; // 同步本地结果
       }

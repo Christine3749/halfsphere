@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-const OWNER_EMAIL = "ethan7586@gsyen.com";
+const EDITABLE_TIERS = new Set(["guest", "user", "admin"]);
 
 export async function PATCH(
   request: Request,
@@ -22,26 +22,43 @@ export async function PATCH(
     return NextResponse.json({ error: "不能修改自己的权限" }, { status: 400 });
   }
 
-  // 不能修改 owner
-  const { data: targetUser } = await admin.auth.admin.getUserById(id);
-  if (targetUser?.user?.email?.toLowerCase() === OWNER_EMAIL) {
+  const { data: targetTier, error: targetTierError } = await admin
+    .from("user_tiers")
+    .select("tier")
+    .eq("user_id", id)
+    .single();
+  if (targetTierError) {
+    return NextResponse.json({ error: "无法确认目标用户权限" }, { status: 502 });
+  }
+  if (targetTier?.tier === "owner") {
     return NextResponse.json({ error: "不能修改 Owner 的权限" }, { status: 403 });
   }
 
-  // 禁止通过 UI 把任何人提升为 owner
-  if (tier === "owner") {
-    return NextResponse.json({ error: "不能通过界面设置 owner 角色" }, { status: 403 });
+  if (tier !== undefined && (typeof tier !== "string" || !EDITABLE_TIERS.has(tier))) {
+    return NextResponse.json({ error: "角色值无效" }, { status: 400 });
+  }
+  if (
+    permissions !== undefined &&
+    (!Array.isArray(permissions) || permissions.some((value) => typeof value !== "string"))
+  ) {
+    return NextResponse.json({ error: "权限列表格式无效" }, { status: 400 });
   }
 
-  const updates: Record<string, unknown> = {};
+  const updates: {
+    tier?: "guest" | "user" | "admin";
+    permissions?: string[];
+    granted_by: string;
+    upgraded_at: string;
+  } = {
+    granted_by: adminUser.id,
+    upgraded_at: new Date().toISOString(),
+  };
   if (tier !== undefined) updates.tier = tier;
   if (permissions !== undefined) updates.permissions = permissions;
-  updates.granted_by = adminUser.id;
-  updates.upgraded_at = new Date().toISOString();
 
   const { error: updateErr } = await admin
     .from("user_tiers")
-    .update(updates as any)
+    .update(updates)
     .eq("user_id", id);
 
   if (updateErr) {

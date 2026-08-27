@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardHeader, CardLabel, Badge, SegmentedProgress } from "@/components/primitives";
 
@@ -13,17 +13,27 @@ interface Budget {
   telegram_chat_id: string | null;
 }
 
+interface BudgetResponse {
+  data: Budget[];
+}
+
+interface SaveBudgetResponse {
+  data: Budget;
+}
+
+const DEFAULT_BUDGET: Budget = {
+  monthly_limit_usd: 500,
+  warn_threshold: 80,
+  alert_threshold: 95,
+  email_alerts: true,
+  telegram_chat_id: "",
+};
+
 export default function BudgetPage() {
   const queryClient = useQueryClient();
-  const [form, setForm] = useState<Budget>({
-    monthly_limit_usd: 500,
-    warn_threshold: 80,
-    alert_threshold: 95,
-    email_alerts: true,
-    telegram_chat_id: "",
-  });
+  const [draft, setDraft] = useState<Budget | null>(null);
 
-  const { data, isLoading } = useQuery<{ data: Budget[] }>({
+  const { data, isLoading } = useQuery<BudgetResponse>({
     queryKey: ["budget"],
     queryFn: async () => {
       const res = await fetch("/api/budget");
@@ -32,20 +42,16 @@ export default function BudgetPage() {
     },
   });
 
-  useEffect(() => {
-    if (data?.data?.[0]) {
-      const b = data.data[0];
-      setForm({
-        monthly_limit_usd: b.monthly_limit_usd,
-        warn_threshold: b.warn_threshold,
-        alert_threshold: b.alert_threshold,
-        email_alerts: b.email_alerts,
-        telegram_chat_id: b.telegram_chat_id || "",
-      });
-    }
-  }, [data]);
+  const savedBudget = data?.data?.[0];
+  const form = draft ?? (savedBudget ? {
+    monthly_limit_usd: savedBudget.monthly_limit_usd,
+    warn_threshold: savedBudget.warn_threshold,
+    alert_threshold: savedBudget.alert_threshold,
+    email_alerts: savedBudget.email_alerts,
+    telegram_chat_id: savedBudget.telegram_chat_id || "",
+  } : DEFAULT_BUDGET);
 
-  const saveMutation = useMutation({
+  const saveMutation = useMutation<SaveBudgetResponse, Error, Budget>({
     mutationFn: async (payload: Budget) => {
       const res = await fetch("/api/budget", {
         method: "POST",
@@ -58,7 +64,11 @@ export default function BudgetPage() {
       }
       return res.json();
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["budget"] }),
+    onSuccess: (response) => {
+      queryClient.setQueryData<BudgetResponse>(["budget"], { data: [response.data] });
+      setDraft(null);
+      void queryClient.invalidateQueries({ queryKey: ["budget"] });
+    },
   });
 
   function handleSave(e: React.FormEvent) {
@@ -106,7 +116,7 @@ export default function BudgetPage() {
               max={2000}
               step={10}
               value={form.monthly_limit_usd}
-              onChange={(e) => setForm({ ...form, monthly_limit_usd: Number(e.target.value) })}
+              onChange={(e) => setDraft({ ...form, monthly_limit_usd: Number(e.target.value) })}
               style={{ width: "100%", accentColor: "var(--amber)" }}
             />
             <div style={{ display: "flex", justifyContent: "space-between" }} className="mono">
@@ -131,7 +141,7 @@ export default function BudgetPage() {
               max={100}
               step={5}
               value={form.warn_threshold}
-              onChange={(e) => setForm({ ...form, warn_threshold: Number(e.target.value) })}
+              onChange={(e) => setDraft({ ...form, warn_threshold: Number(e.target.value) })}
               style={{ width: "100%", accentColor: "var(--amber)" }}
             />
             <SegmentedProgress value={form.warn_threshold} max={100} segments={40} warn={0.6} danger={0.9} />
@@ -153,7 +163,7 @@ export default function BudgetPage() {
               max={100}
               step={5}
               value={form.alert_threshold}
-              onChange={(e) => setForm({ ...form, alert_threshold: Number(e.target.value) })}
+              onChange={(e) => setDraft({ ...form, alert_threshold: Number(e.target.value) })}
               style={{ width: "100%", accentColor: "var(--red)" }}
             />
             <SegmentedProgress value={form.alert_threshold} max={100} segments={40} warn={0.6} danger={0.9} />
@@ -173,7 +183,7 @@ export default function BudgetPage() {
                 <input
                   type="checkbox"
                   checked={form.email_alerts}
-                  onChange={(e) => setForm({ ...form, email_alerts: e.target.checked })}
+                  onChange={(e) => setDraft({ ...form, email_alerts: e.target.checked })}
                   style={{ opacity: 0, width: 0, height: 0 }}
                 />
                 <span
@@ -207,7 +217,7 @@ export default function BudgetPage() {
               </label>
               <input
                 value={form.telegram_chat_id || ""}
-                onChange={(e) => setForm({ ...form, telegram_chat_id: e.target.value })}
+                onChange={(e) => setDraft({ ...form, telegram_chat_id: e.target.value })}
                 placeholder="例如：123456789"
                 style={{
                   background: "var(--bg)",

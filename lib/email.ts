@@ -11,7 +11,22 @@ function getResend() {
 }
 
 const FROM = "穹弯 <noreply@halfsphere.com>";
-const LOGIN_URL = "https://halfsphere.com/login";
+
+function escapeHtml(value: string) {
+  return value.replace(
+    /[&<>'"]/g,
+    (character) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[
+        character
+      ]!,
+  );
+}
+
+function secureActionLink(value: string) {
+  const url = new URL(value);
+  if (url.protocol !== "https:") throw new Error("Approval link must use HTTPS");
+  return escapeHtml(url.toString());
+}
 
 const base = (content: string) => `
 <!DOCTYPE html>
@@ -51,8 +66,11 @@ const base = (content: string) => `
 export async function sendApprovalEmail(
   email: string,
   displayName: string,
-  tempPassword: string
+  actionLink: string,
 ) {
+  const safeEmail = escapeHtml(email);
+  const safeDisplayName = escapeHtml(displayName);
+  const safeActionLink = secureActionLink(actionLink);
   const content = `
     <!-- Badge -->
     <div style="margin-bottom:24px">
@@ -66,37 +84,29 @@ export async function sendApprovalEmail(
       申请已通过
     </h1>
     <p style="margin:0 0 32px;font-size:13px;color:#8E8E93">
-      你好，${displayName} · Your application has been approved.
+      你好，${safeDisplayName} · Your application has been approved.
     </p>
 
-    <!-- Credentials -->
+    <!-- One-time access -->
     <div style="background:#0A0A0B;border:1px solid #26262A;border-radius:6px;padding:24px;margin-bottom:28px">
       <p style="margin:0 0 16px;font-size:10px;letter-spacing:0.18em;color:#8E8E93;text-transform:uppercase">
-        登录凭据 / Credentials
+        一次性链接 / One-time Link
       </p>
       <table style="width:100%;border-collapse:collapse">
         <tr>
           <td style="padding:8px 0;border-bottom:1px solid #1a1a1c;font-size:11px;color:#6E6E76;letter-spacing:0.1em;text-transform:uppercase;width:100px">
-            地址 / URL
-          </td>
-          <td style="padding:8px 0;border-bottom:1px solid #1a1a1c">
-            <a href="${LOGIN_URL}" style="font-size:13px;color:#FFB020;text-decoration:none">${LOGIN_URL}</a>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:8px 0;border-bottom:1px solid #1a1a1c;font-size:11px;color:#6E6E76;letter-spacing:0.1em;text-transform:uppercase">
             邮箱 / Email
           </td>
           <td style="padding:8px 0;border-bottom:1px solid #1a1a1c;font-size:13px;color:#E5E5E7">
-            ${email}
+            ${safeEmail}
           </td>
         </tr>
         <tr>
           <td style="padding:8px 0;font-size:11px;color:#6E6E76;letter-spacing:0.1em;text-transform:uppercase">
-            临时密码 / Password
+            安全 / Security
           </td>
-          <td style="padding:8px 0;font-size:15px;font-weight:700;color:#FFB020;letter-spacing:0.08em">
-            ${tempPassword}
+          <td style="padding:8px 0;font-size:12px;color:#8E8E93;line-height:1.6">
+            链接仅用于本次设置密码，请勿转发。
           </td>
         </tr>
       </table>
@@ -104,15 +114,15 @@ export async function sendApprovalEmail(
 
     <!-- CTA -->
     <div style="text-align:center;margin-bottom:28px">
-      <a href="${LOGIN_URL}" style="display:inline-block;background:#FFB020;color:#0A0A0B;font-size:13px;font-weight:700;letter-spacing:0.08em;padding:12px 32px;border-radius:6px;text-decoration:none;text-transform:uppercase">
-        立即登录 · Login Now
+      <a href="${safeActionLink}" style="display:inline-block;background:#FFB020;color:#0A0A0B;font-size:13px;font-weight:700;letter-spacing:0.08em;padding:12px 32px;border-radius:6px;text-decoration:none;text-transform:uppercase">
+        设置密码 · Set Password
       </a>
     </div>
 
     <!-- Note -->
     <p style="margin:0;font-size:12px;color:#4A4A4F;line-height:1.7;text-align:center">
-      首次登录后请立即修改密码。<br>
-      Please change your password upon first login.
+      如果你没有申请访问，请忽略此邮件。<br>
+      Ignore this message if you did not request access.
     </p>`;
 
   await getResend().emails.send({

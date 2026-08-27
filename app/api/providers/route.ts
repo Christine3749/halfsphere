@@ -7,13 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { encrypt } from "@/lib/crypto";
-async function requireAuth(supabase: any) {
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error || !user) {
-    return { error: NextResponse.json({ error: "未登录" }, { status: 401 }), user: null };
-  }
-  return { error: null, user };
-}
+import { requireAuth } from "@/lib/auth-helpers";
 
 const VALID_PROVIDERS = [
   "openai",
@@ -33,7 +27,7 @@ function isValidProvider(name: string): name is (typeof VALID_PROVIDERS)[number]
  * GET /api/providers
  * 返回当前用户的所有 provider 列表（不含密钥）
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const supabase = await createClient();
     const {

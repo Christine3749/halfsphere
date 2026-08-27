@@ -5,20 +5,12 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { requireAuth as requireAuthLib } from "@/lib/auth";
-
-async function requireAuthBudget(supabase: any) {
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error || !user) {
-    return { error: NextResponse.json({ error: "未登录" }, { status: 401 }), user: null };
-  }
-  return { error: null, user };
-}
+import { requireAuth } from "@/lib/auth-helpers";
 
 /**
  * GET /api/budget
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const supabase = await createClient();
     const {
@@ -55,7 +47,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { error: proError, user } = await requireAuthBudget(supabase);
+    const { error: proError, user } = await requireAuth(supabase);
     if (proError) return proError;
 
     const body = await request.json();

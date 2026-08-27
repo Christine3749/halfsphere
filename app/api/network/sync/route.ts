@@ -1,11 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getUserFromRequest } from "@/lib/request-auth";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const req = request as Request & { nextUrl?: URL };
-    const user = await getUserFromRequest(req as any);
+    const user = await getUserFromRequest(request);
     if (!user) {
       return NextResponse.json({ error: "未登录" }, { status: 401 });
     }

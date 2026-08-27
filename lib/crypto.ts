@@ -2,12 +2,11 @@
  * 穹弯 halfsphere - AES-256-GCM 加密模块
  * 用于加密存储用户的 Provider API Key
  */
-import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "crypto";
+import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
 
 const ALGORITHM = "aes-256-gcm";
 const KEY_LENGTH = 32; // 256 位 = 32 字节
 const IV_LENGTH = 16; // 128 位 IV
-const TAG_LENGTH = 16; // 128 位认证标签
 
 /**
  * 从环境变量获取加密密钥

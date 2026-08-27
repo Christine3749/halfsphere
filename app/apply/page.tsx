@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { HemisphereMark } from "@/components/hemisphere-mark";
+import { getPublicApiUrl } from "@/lib/public-config";
 
 export default function ApplyPage() {
   const [email, setEmail] = useState("");
@@ -17,7 +18,7 @@ export default function ApplyPage() {
     setLoading(true);
 
     try {
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || "https://halfsphere-api-827638954474.us-central1.run.app";
+      const apiBase = getPublicApiUrl();
       const res = await fetch(`${apiBase}/apply`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -27,8 +28,8 @@ export default function ApplyPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "提交失败");
       setSubmitted(true);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "提交失败");
     } finally {
       setLoading(false);
     }

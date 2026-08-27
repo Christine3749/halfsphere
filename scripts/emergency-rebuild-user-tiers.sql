@@ -3,6 +3,37 @@
 -- 用于修复 RLS 递归导致的 500 错误
 -- ============================================
 
+-- QUARANTINED: 本脚本会删除并重建授权表，默认执行必定失败。仅在已取得本次
+-- 数据破坏的明确批准、验证离线备份并确认目标数据库后，才可在同一会话中设置：
+--   SET halfsphere.destructive_rebuild_approval = 'USER_TIERS_REBUILD_ACKNOWLEDGED';
+--   SET halfsphere.expected_database = '<current_database() 的精确值>';
+--   SET halfsphere.verified_backup_sha256 = '<64 位小写 SHA-256>';
+--   SET halfsphere.change_id = 'HS-YYYYMMDD-<审批记录>';
+BEGIN;
+
+DO $halfsphere_destructive_guard$
+DECLARE
+    expected_database TEXT := current_setting('halfsphere.expected_database', true);
+    approval TEXT := current_setting('halfsphere.destructive_rebuild_approval', true);
+    backup_sha256 TEXT := current_setting('halfsphere.verified_backup_sha256', true);
+    change_id TEXT := current_setting('halfsphere.change_id', true);
+BEGIN
+    IF approval IS DISTINCT FROM 'USER_TIERS_REBUILD_ACKNOWLEDGED' THEN
+        RAISE EXCEPTION 'emergency user_tiers rebuild is quarantined: explicit approval is absent';
+    END IF;
+    IF expected_database IS NULL OR expected_database <> current_database() THEN
+        RAISE EXCEPTION 'user_tiers rebuild target mismatch: expected %, connected %',
+            expected_database, current_database();
+    END IF;
+    IF backup_sha256 IS NULL OR backup_sha256 !~ '^[0-9a-f]{64}$' THEN
+        RAISE EXCEPTION 'user_tiers rebuild requires a verified lowercase SHA-256 backup hash';
+    END IF;
+    IF change_id IS NULL OR change_id !~ '^HS-[0-9]{8}-[A-Za-z0-9._-]+$' THEN
+        RAISE EXCEPTION 'user_tiers rebuild requires an approved HS change id';
+    END IF;
+END
+$halfsphere_destructive_guard$;
+
 -- 1. 先禁用 RLS 止血（superuser 不受 RLS 影响，此命令安全）
 ALTER TABLE user_tiers DISABLE ROW LEVEL SECURITY;
 
@@ -57,9 +88,6 @@ DROP POLICY IF EXISTS user_tiers_self_update ON user_tiers;
 CREATE POLICY user_tiers_self_select ON user_tiers
   FOR SELECT TO authenticated USING (auth.uid() = user_id);
 
-CREATE POLICY user_tiers_self_update ON user_tiers
-  FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-
 -- 8. 重新创建触发器（新用户注册自动插入 user 记录）
 CREATE OR REPLACE FUNCTION public.handle_new_user_tier()
 RETURNS TRIGGER AS $$
@@ -77,8 +105,10 @@ CREATE TRIGGER on_auth_user_created_tier
     EXECUTE FUNCTION public.handle_new_user_tier();
 
 -- 9. 授权
-GRANT SELECT, UPDATE ON public.user_tiers TO authenticated;
+GRANT SELECT ON public.user_tiers TO authenticated;
 GRANT USAGE ON SCHEMA public TO authenticated;
 
 -- 10. 清理备份（确认网站恢复正常后手动执行）
 -- DROP TABLE public.user_tiers_backup;
+
+COMMIT;

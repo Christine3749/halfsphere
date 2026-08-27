@@ -7,6 +7,19 @@ interface RateRecord {
   resetTime: number;
 }
 const rateMap = new Map<string, RateRecord>();
+const MAX_RATE_RECORDS = 10_000;
+const RATE_SWEEP_INTERVAL_MS = 1_000;
+let nextRateSweepAt = 0;
+
+function makeRoomForRateRecord(now: number): boolean {
+  if (now < nextRateSweepAt) return false;
+  nextRateSweepAt = now + RATE_SWEEP_INTERVAL_MS;
+
+  for (const [key, record] of rateMap) {
+    if (now >= record.resetTime) rateMap.delete(key);
+  }
+  return rateMap.size < MAX_RATE_RECORDS;
+}
 
 function isRateLimited(
   key: string,
@@ -15,7 +28,14 @@ function isRateLimited(
 ): boolean {
   const now = Date.now();
   const record = rateMap.get(key);
-  if (!record || now > record.resetTime) {
+  if (!record || now >= record.resetTime) {
+    if (
+      !record &&
+      rateMap.size >= MAX_RATE_RECORDS &&
+      !makeRoomForRateRecord(now)
+    ) {
+      return true;
+    }
     rateMap.set(key, { count: 1, resetTime: now + windowMs });
     return false;
   }
@@ -25,11 +45,9 @@ function isRateLimited(
 }
 
 function getClientIP(req: NextRequest): string {
-  return (
-    req.headers.get("x-real-ip") ??
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    "unknown"
-  );
+  // Caddy and Vercel sanitize X-Forwarded-For. X-Real-IP is intentionally
+  // ignored because Caddy otherwise forwards an attacker-supplied value.
+  return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
 }
 
 /* ── Security headers ── */
@@ -43,7 +61,7 @@ const SECURITY_HEADERS: Record<string, string> = {
   "Cross-Origin-Resource-Policy": "same-origin",
 };
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const ip = getClientIP(request);
 

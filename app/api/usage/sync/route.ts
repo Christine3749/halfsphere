@@ -3,7 +3,7 @@
  * POST /api/usage/sync
  * 遍历当前用户的所有 providers，调用对应 fetcher 拉取数据并写入数据库
  */
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { decrypt } from "@/lib/crypto";
 import * as openaiProvider from "@/lib/providers/openai";
@@ -19,7 +19,7 @@ const PROVIDER_FETCHERS: Record<
   "new-api": newApiProvider.fetchUsage,
 };
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     const supabase = await createClient();
     const {

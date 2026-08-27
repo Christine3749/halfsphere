@@ -64,13 +64,6 @@ export async function requirePermission(permission: string) {
   return { user, tier, error: NextResponse.json({ error: `缺少权限: ${permission}` }, { status: 403 }) };
 }
 
-/* ── Legacy helpers (keep for compat) ── */
-const ADMIN_UIDS = new Set(["29964ebd-c191-4ddf-ad28-bed931cab458"]);
-
-export function isAdmin(userId: string): boolean {
-  return ADMIN_UIDS.has(userId);
-}
-
 export async function requirePro() {
   return requireAdmin(); // pro → admin 兼容
 }

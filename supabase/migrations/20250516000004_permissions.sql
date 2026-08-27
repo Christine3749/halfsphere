@@ -9,8 +9,7 @@ ALTER TABLE user_tiers
 /* 旧数据迁移：free → user，pro → user（后续由管理员手动赋权） */
 UPDATE user_tiers SET tier = 'user' WHERE tier IN ('free', 'pro');
 
-/* 硬编码管理员设为 admin */
-UPDATE user_tiers SET tier = 'admin' WHERE user_id = '29964ebd-c191-4ddf-ad28-bed931cab458';
+/* 管理员/owner 必须通过受审计的服务端引导流程授予，禁止硬编码身份。 */
 
 /* 给 user_tiers 加 comments */
 COMMENT ON COLUMN user_tiers.tier         IS '角色：guest | user | admin';
@@ -47,6 +46,8 @@ DROP POLICY IF EXISTS user_tiers_admin_all ON user_tiers;
 DROP POLICY IF EXISTS user_tiers_self ON user_tiers;
 DROP POLICY IF EXISTS "用户只能查看自己的等级" ON user_tiers;
 DROP POLICY IF EXISTS "用户不能修改自己的等级" ON user_tiers;
+DROP POLICY IF EXISTS "用户只能更新自己的等级" ON user_tiers;
+DROP POLICY IF EXISTS user_tiers_self_update ON user_tiers;
 
 /* 用户只能 SELECT 自己的记录 */
 CREATE POLICY user_tiers_self_select ON user_tiers
@@ -54,11 +55,6 @@ CREATE POLICY user_tiers_self_select ON user_tiers
   TO authenticated
   USING (auth.uid() = user_id);
 
-/* 用户只能 UPDATE 自己的记录 */
-CREATE POLICY user_tiers_self_update ON user_tiers
-  FOR UPDATE
-  TO authenticated
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
-
-/* admin 操作走 service_role key 的服务端代码，不通过前端 RLS */
+/* admin 操作走受保护的服务端身份，不通过前端 RLS。 */
+REVOKE INSERT, UPDATE, DELETE ON public.user_tiers FROM anon, authenticated;
+GRANT SELECT ON public.user_tiers TO authenticated;

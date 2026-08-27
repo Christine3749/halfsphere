@@ -30,7 +30,7 @@ export default function AdminApplicationsPage() {
       return;
     }
     fetchApps();
-  }, [user, authLoading, router]);
+  }, [user, tier, authLoading, router]);
 
   async function fetchApps() {
     setLoading(true);
@@ -54,13 +54,13 @@ export default function AdminApplicationsPage() {
       });
       const data = await res.json();
       if (data.success) {
-        setResult(`已通过: ${data.email} / 密码: ${data.temp_password}`);
+        setResult(`已通过: ${data.email} / 一次性设置密码链接已发送`);
         fetchApps();
       } else {
         setResult(data.error || "操作失败");
       }
-    } catch (err: any) {
-      setResult(err.message);
+    } catch (err: unknown) {
+      setResult(err instanceof Error ? err.message : "操作失败");
     } finally {
       setActionId(null);
     }
@@ -90,8 +90,8 @@ export default function AdminApplicationsPage() {
       } else {
         setResult(data.error || "操作失败");
       }
-    } catch (err: any) {
-      setResult(err.message);
+    } catch (err: unknown) {
+      setResult(err instanceof Error ? err.message : "操作失败");
     } finally {
       setActionId(null);
     }

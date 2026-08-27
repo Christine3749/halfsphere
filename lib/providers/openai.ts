@@ -6,12 +6,6 @@
 import type { UsageSnapshot, FetchUsageFn } from "./types";
 import { OPENAI_PRICING } from "./pricing";
 
-interface OpenAIUsageItem {
-  object: string;
-  // 不同 endpoint 返回的结构略有差异
-  // /v1/organization/usage/completions 返回的结构
-}
-
 interface OpenAICompletionUsageResponse {
   object: string;
   data: Array<{

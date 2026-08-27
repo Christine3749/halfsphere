@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
@@ -14,6 +15,7 @@ interface AuthState {
 }
 
 export function useAuth() {
+  const router = useRouter();
   const [state, setState] = useState<AuthState>({
     user: null,
     tier: "guest",
@@ -90,7 +92,8 @@ export function useAuth() {
   const signOut = async () => {
     await supabase.auth.signOut();
     setState({ user: null, tier: "guest", permissions: [], loading: false });
-    window.location.href = "/login";
+    router.replace("/login");
+    router.refresh();
   };
 
   const hasPermission = (perm: string) => {

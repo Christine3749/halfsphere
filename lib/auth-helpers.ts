@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { getUserTier } from "@/lib/auth";
+import type { Database } from "@/lib/supabase/types";
 
-export async function requireAuth(supabase: any) {
+export async function requireAuth(supabase: SupabaseClient<Database>) {
   const { data: { user }, error } = await supabase.auth.getUser();
   if (error || !user) {
     return { error: NextResponse.json({ error: "未登录" }, { status: 401 }), user: null };
@@ -9,7 +11,7 @@ export async function requireAuth(supabase: any) {
   return { error: null, user };
 }
 
-export async function requireAdmin(supabase: any) {
+export async function requireAdmin(supabase: SupabaseClient<Database>) {
   const { data: { user }, error } = await supabase.auth.getUser();
   if (error || !user) {
     return { error: NextResponse.json({ error: "未登录" }, { status: 401 }), user: null };
@@ -22,6 +24,6 @@ export async function requireAdmin(supabase: any) {
 }
 
 // Legacy compat
-export async function requirePro(supabase: any) {
+export async function requirePro(supabase: SupabaseClient<Database>) {
   return requireAuth(supabase);
 }

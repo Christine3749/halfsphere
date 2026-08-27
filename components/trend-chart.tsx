@@ -29,6 +29,11 @@ export function TrendChart({
     return () => ro.disconnect();
   }, []);
 
+  const maxV = useMemo(
+    () => Math.max(...data.map((d) => d.value), 0.01) * 1.15,
+    [data]
+  );
+
   if (data.length === 0) {
     return (
       <div
@@ -51,11 +56,7 @@ export function TrendChart({
   const innerW = Math.max(0, w - padding.l - padding.r);
   const innerH = height - padding.t - padding.b;
 
-  const maxV = useMemo(
-    () => Math.max(...data.map((d) => d.value), 0) * 1.15,
-    [data]
-  );
-  const xAt = (i: number) => padding.l + (i / (data.length - 1)) * innerW;
+  const xAt = (i: number) => padding.l + (i / Math.max(data.length - 1, 1)) * innerW;
   const yAt = (v: number) =>
     padding.t + innerH - (v / maxV) * innerH;
 

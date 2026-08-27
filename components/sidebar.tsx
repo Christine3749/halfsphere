@@ -22,10 +22,6 @@ const navAdmin = [
   { label: "会员", code: "MEMBERS", href: "/admin/memberships", icon: KeyRound },
 ];
 
-function DividerV() {
-  return <div style={{ width: 1, height: 14, background: "var(--border)" }} />;
-}
-
 function NavItem({
   icon: Icon,
   label,
@@ -159,7 +155,7 @@ function SystemClock() {
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { user, tier, permissions, signOut, hasPermission } = useAuth();
+  const { user, tier, signOut, hasPermission } = useAuth();
   const isAdmin = tier === "admin" || tier === "owner";
   const isGuest = !user;
 

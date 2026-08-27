@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Card,
@@ -44,6 +44,9 @@ interface BudgetCfg {
 
 /* ── helpers ── */
 const fmtUSD = (n: number) => `$${n.toFixed(2)}`;
+const subscribeToClient = () => () => {};
+const getClientSnapshot = () => true;
+const getServerSnapshot = () => false;
 
 const ACTIVITY = [
   { t: "04m", code: "SYNC.OPENAI", msg: "完整同步 · 24 条新快照", tone: "green" as const },
@@ -55,8 +58,11 @@ const ACTIVITY = [
 
 /* ════════════════════════════════════════ */
 export default function DashboardPage() {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = useSyncExternalStore(
+    subscribeToClient,
+    getClientSnapshot,
+    getServerSnapshot
+  );
 
   /* data hooks */
   const { data: usage } = useQuery<UsageData>({
@@ -707,5 +713,4 @@ function RangePill({ label, active }: { label: string; active?: boolean }) {
     </button>
   );
 }
-
 

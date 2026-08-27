@@ -121,7 +121,7 @@ export default function SettingsPage() {
             <div className="mono" style={{ color: "var(--fg-mute)", fontSize: 12 }}>加载中...</div>
           ) : providers.length === 0 ? (
             <div className="mono" style={{ color: "var(--fg-mute)", fontSize: 12, textAlign: "center", padding: "20px 0" }}>
-              暂无 Provider，点击右上角"添加"按钮配置
+              暂无 Provider，点击右上角&ldquo;添加&rdquo;按钮配置
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
